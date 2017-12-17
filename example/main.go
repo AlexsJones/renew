@@ -9,12 +9,19 @@ import (
 )
 
 func programStateChange(s renew.State) {
-	fmt.Printf("State has changed to %s\n", s.Description)
+	switch s.StatusCode {
+	case renew.RUNNING:
+		fmt.Println("State has changed to running")
+	case renew.FETCHING:
+		fmt.Println("State has changed to fetched...")
+	case renew.UPDATEFETCHED:
+		fmt.Println("State has changed to update fetched")
+	}
 }
 
 func mainStarted() {
 	fmt.Println("Started renew")
-
+	time.Sleep(time.Second * 10)
 	fmt.Println("Ended renew")
 }
 
@@ -23,7 +30,7 @@ func main() {
 		Process:      mainStarted,
 		StateMonitor: programStateChange,
 		Fetcher: &fetcher.GithubFetcher{
-			Interval: time.Second,
+			Interval: time.Second * 5,
 		},
 	})
 }
