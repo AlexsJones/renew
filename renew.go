@@ -15,6 +15,10 @@ func Run(c *Configuration) {
 		fmt.Println("No process function has been defined")
 		os.Exit(1)
 	}
+	if c.Fetcher == nil {
+		fmt.Println("No fetch process configured")
+		os.Exit(1)
+	}
 
 	go func() {
 
