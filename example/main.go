@@ -21,7 +21,7 @@ func programStateChange(s renew.State) {
 
 func mainStarted() {
 	fmt.Println("Started renew")
-	time.Sleep(time.Second * 10)
+	time.Sleep(time.Second * 30)
 	fmt.Println("Ended renew")
 }
 

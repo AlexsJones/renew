@@ -3,6 +3,7 @@ package renew
 import (
 	"fmt"
 	"os"
+	"time"
 )
 
 //Run ...
@@ -19,9 +20,16 @@ func Run(c *Configuration) {
 		fmt.Println("No fetch process configured")
 		os.Exit(1)
 	}
+	c.StartTime = time.Now()
 
 	go func() {
-
+		c.Fetcher.Init()
+		for {
+			if c.Fetcher.ShouldRun() {
+				c.Fetcher.Perform()
+			}
+			time.Sleep(time.Second)
+		}
 	}()
 
 	c.Process()
