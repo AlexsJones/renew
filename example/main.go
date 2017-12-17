@@ -8,8 +8,8 @@ import (
 	"github.com/AlexsJones/renew/fetcher"
 )
 
-func programStateChange(s renew.State) {
-	switch s.StatusCode {
+func programStateChange(s renew.StatusCode) {
+	switch s {
 	case renew.RUNNING:
 		fmt.Println("State has changed to running")
 	case renew.FETCHING:
@@ -21,7 +21,7 @@ func programStateChange(s renew.State) {
 
 func mainStarted() {
 	fmt.Println("Started renew")
-	time.Sleep(time.Second * 30)
+	time.Sleep(time.Second * 20)
 	fmt.Println("Ended renew")
 }
 
@@ -30,7 +30,8 @@ func main() {
 		Process:      mainStarted,
 		StateMonitor: programStateChange,
 		Fetcher: &fetcher.GithubFetcher{
-			Interval: time.Second * 5,
+			Interval:         time.Second * 5,
+			GithubRepository: "https://github.com/AlexsJones/renew.git",
 		},
 	})
 }
