@@ -9,9 +9,3 @@ const (
 	UPDATEFETCHED
 	FAILURE
 )
-
-//State ...
-type State struct {
-	Description string
-	StatusCode  StatusCode
-}

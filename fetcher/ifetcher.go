@@ -2,14 +2,14 @@ package fetcher
 
 //IFetcher interface
 type IFetcher interface {
-	Perform()
+	Perform() error
 	ShouldRun() bool
 	Init()
 }
 
 //Perform update check
-func Perform(f IFetcher) {
-	f.Perform()
+func Perform(f IFetcher) error {
+	return f.Perform()
 }
 
 //ShouldRun ...

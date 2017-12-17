@@ -1,7 +1,9 @@
 package fetcher
 
 import (
+	"fmt"
 	"log"
+	"os"
 	"time"
 )
 
@@ -9,11 +11,15 @@ import (
 type GithubFetcher struct {
 	Interval time.Duration
 	LastRun  time.Time
+	//Fetcher specific -------
+	GithubRepository string
 }
 
 //Perform updte check
-func (g *GithubFetcher) Perform() {
+func (g *GithubFetcher) Perform() error {
 	log.Println("Performing update with github fetcher")
+
+	return nil
 }
 
 //ShouldRun ...
@@ -34,4 +40,8 @@ func (g *GithubFetcher) ShouldRun() bool {
 //Init ...
 func (g *GithubFetcher) Init() {
 	g.LastRun = time.Now()
+	if g.GithubRepository == "" {
+		fmt.Println("No Github repository specified")
+		os.Exit(1)
+	}
 }

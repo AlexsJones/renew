@@ -3,7 +3,11 @@ package renew
 import (
 	"fmt"
 	"os"
+	"path"
+	"runtime"
 	"time"
+
+	"github.com/kardianos/osext"
 )
 
 //Run ...
@@ -20,13 +24,30 @@ func Run(c *Configuration) {
 		fmt.Println("No fetch process configured")
 		os.Exit(1)
 	}
+	_, filename, _, ok := runtime.Caller(0)
+	if ok {
+		p := path.Dir(filename)
+		c.ApplicationDirectory = p
+	}
+	osex, err := osext.Executable()
+	if err != nil {
+		fmt.Println("An error occured with binary location search")
+		os.Exit(1)
+	}
+	c.ApplicationBinaryPath = osex
 	c.StartTime = time.Now()
 
 	go func() {
 		c.Fetcher.Init()
+		c.StateMonitor(RUNNING)
 		for {
 			if c.Fetcher.ShouldRun() {
-				c.Fetcher.Perform()
+				c.StateMonitor(FETCHING)
+				if err := c.Fetcher.Perform(); err != nil {
+					c.StateMonitor(FAILURE)
+				} else {
+					c.StateMonitor(UPDATEFETCHED)
+				}
 			}
 			time.Sleep(time.Second)
 		}

@@ -7,7 +7,9 @@ import (
 //Configuration ...
 type Configuration struct {
   StartTime time.Time
+  ApplicationDirectory string
+  ApplicationBinaryPath string
   Process func()
-  StateMonitor func(State)
+  StateMonitor func(StatusCode)
   Fetcher fetcher.IFetcher
 }
