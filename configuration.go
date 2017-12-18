@@ -9,6 +9,7 @@ type Configuration struct {
   StartTime time.Time
   ApplicationDirectory string
   ApplicationBinaryPath string
+  ApplicationArguments []string
   Process func()
   StateMonitor func(StatusCode)
   Fetcher fetcher.IFetcher
