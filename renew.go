@@ -41,24 +41,16 @@ func signalHandler() {
 		for {
 			s := <-signalChan
 			switch s {
-			// kill -SIGHUP XXXX
 			case syscall.SIGHUP:
 				fmt.Println("hungup")
-
-			// kill -SIGINT XXXX or Ctrl+c
 			case syscall.SIGINT:
 				fmt.Println("Warikomi")
-
-			// kill -SIGTERM XXXX
 			case syscall.SIGTERM:
 				fmt.Println("force stop")
 				exitChan <- 0
-
-			// kill -SIGQUIT XXXX
 			case syscall.SIGQUIT:
 				fmt.Println("stop and core dump")
 				exitChan <- 0
-
 			default:
 				fmt.Println("Unknown signal.")
 				exitChan <- 1
@@ -72,6 +64,8 @@ func signalHandler() {
 
 //Run ...
 func Run(c *Configuration) {
+
+	go signalHandler()
 
 	//Capture child process flags
 	var renewChild bool
