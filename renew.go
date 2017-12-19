@@ -16,11 +16,11 @@ import (
 func restart(c *Configuration) {
 	log.Println("Restarting now...")
 
-	currentPid := syscall.Getppid()
+	currentPid := syscall.Getpid()
 	log.Printf("Current pid %d\n", currentPid)
-	pid, err := syscall.ForkExec(c.ApplicationBinaryPath, c.ApplicationArguments[1:], &syscall.ProcAttr{
+	pid, err := syscall.ForkExec(c.ApplicationBinaryPath, c.ApplicationArguments, &syscall.ProcAttr{
 		Files: []uintptr{os.Stdin.Fd(), os.Stdout.Fd(), os.Stderr.Fd()},
-		Sys:   &syscall.SysProcAttr{},
+		Sys:   &syscall.SysProcAttr{Setpgid: true},
 	})
 	if err != nil {
 		log.Fatal(err.Error())
@@ -82,6 +82,12 @@ func signalHandler() {
 
 //Run ...
 func Run(c *Configuration) {
+
+	go func() {
+		for {
+			_ = make([]int, 1024*10*10)
+		}
+	}()
 
 	pid := os.Getpid()
 	log.Printf("Started with process id %d", pid)
