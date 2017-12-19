@@ -1,11 +1,9 @@
 package renew
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
 	"os/signal"
 	"path"
 	"runtime"
@@ -17,15 +15,35 @@ import (
 
 func restart(c *Configuration) {
 	log.Println("Restarting now...")
-	args := []string{
-		"-renew"}
-	cmd := exec.Command(c.ApplicationBinaryPath, args...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err := cmd.Start()
+
+	currentPid := syscall.Getppid()
+	log.Printf("Current pid %d\n", currentPid)
+	pid, err := syscall.ForkExec(c.ApplicationBinaryPath, c.ApplicationArguments[1:], &syscall.ProcAttr{
+		Files: []uintptr{os.Stdin.Fd(), os.Stdout.Fd(), os.Stderr.Fd()},
+		Sys:   &syscall.SysProcAttr{},
+	})
 	if err != nil {
-		log.Fatalf("renew: Failed to launch, error: %v", err)
+		log.Fatal(err.Error())
 	}
+	process, err := os.FindProcess(pid)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	err = process.Release()
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	log.Printf("Started with pid %d\n", pid)
+	currentPid = syscall.Getpid()
+
+	process, err = os.FindProcess(currentPid)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	process.Signal(syscall.SIGTERM)
 }
 
 func signalHandler() {
@@ -65,20 +83,9 @@ func signalHandler() {
 //Run ...
 func Run(c *Configuration) {
 
+	pid := os.Getpid()
+	log.Printf("Started with process id %d", pid)
 	go signalHandler()
-
-	//Capture child process flags
-	var renewChild bool
-	flag.BoolVar(&renewChild, "renew", false, "Process has a parent")
-	flag.Parse()
-	if renewChild {
-		log.Println("Terminating parent process")
-		parent := syscall.Getppid()
-		log.Printf("renew: Killing parent pid: %v", parent)
-		syscall.Kill(parent, syscall.SIGTERM)
-	}
-
-	//
 
 	if c == nil {
 		fmt.Println("No configuration")
