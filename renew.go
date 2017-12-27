@@ -4,94 +4,49 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/signal"
 	"path"
 	"runtime"
 	"syscall"
 	"time"
 
+	"github.com/fsnotify/fsnotify"
 	"github.com/kardianos/osext"
 )
 
-func restart(c *Configuration) {
-	log.Println("Restarting now...")
+func watch(c *Configuration) (chan struct{}, error) {
 
-	currentPid := syscall.Getpid()
-	log.Printf("Current pid %d\n", currentPid)
-	pid, err := syscall.ForkExec(c.ApplicationBinaryPath, c.ApplicationArguments, &syscall.ProcAttr{
-		Files: []uintptr{os.Stdin.Fd(), os.Stdout.Fd(), os.Stderr.Fd()},
-		Sys:   &syscall.SysProcAttr{Setpgid: true},
-	})
+	log.Printf("watching %q\n", c.ApplicationDirectory)
+	w, err := fsnotify.NewWatcher()
 	if err != nil {
-		log.Fatal(err.Error())
+		return nil, err
 	}
-	process, err := os.FindProcess(pid)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-	err = process.Release()
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-	log.Printf("Started with pid %d\n", pid)
-	currentPid = syscall.Getpid()
-
-	process, err = os.FindProcess(currentPid)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-	process.Signal(syscall.SIGTERM)
-}
-
-func signalHandler() {
-	signalChan := make(chan os.Signal, 1)
-	signal.Notify(signalChan,
-		syscall.SIGHUP,
-		syscall.SIGINT,
-		syscall.SIGTERM,
-		syscall.SIGQUIT)
-
-	exitChan := make(chan int)
+	done := make(chan struct{})
 	go func() {
 		for {
-			s := <-signalChan
-			switch s {
-			case syscall.SIGHUP:
-				fmt.Println("hungup")
-			case syscall.SIGINT:
-				fmt.Println("Warikomi")
-			case syscall.SIGTERM:
-				fmt.Println("force stop")
-				exitChan <- 0
-			case syscall.SIGQUIT:
-				fmt.Println("stop and core dump")
-				exitChan <- 0
-			default:
-				fmt.Println("Unknown signal.")
-				exitChan <- 1
+			select {
+			case e := <-w.Events:
+				log.Printf("watcher received: %+v", e)
+				err = syscall.Exec(c.ApplicationBinaryPath, os.Args, os.Environ())
+				if err != nil {
+					log.Fatal(err)
+				}
+			case err = <-w.Errors:
+				log.Printf("watcher error: %+v", err)
+			case <-done:
+				log.Print("watcher shutting down")
+				return
 			}
 		}
 	}()
-
-	code := <-exitChan
-	os.Exit(code)
+	err = w.Add(c.ApplicationDirectory)
+	if err != nil {
+		return nil, err
+	}
+	return done, nil
 }
 
 //Run ...
 func Run(c *Configuration) {
-
-	go func() {
-		for {
-			_ = make([]int, 1024*10*10)
-		}
-	}()
-
-	pid := os.Getpid()
-	log.Printf("Started with process id %d", pid)
-	go signalHandler()
 
 	if c == nil {
 		fmt.Println("No configuration")
@@ -119,26 +74,31 @@ func Run(c *Configuration) {
 	c.ApplicationArguments = os.Args
 	c.StartTime = time.Now()
 
-	go func() {
-		c.Fetcher.Init()
-		c.StateMonitor(RUNNING)
-		for {
-			if c.Fetcher.ShouldRun() {
-				// c.StateMonitor(FETCHING)
-				// if err := c.Fetcher.Perform(); err != nil {
-				// 	c.StateMonitor(FAILURE)
-				// } else {
-				// 	c.StateMonitor(UPDATEFETCHED)
-				// 	//apply update
-				// }
+	//Run the watch process
+	watcher, err := watch(c)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-				restart(c)
+	//Run the fetch cycle
+	go func() {
+
+		for {
+			c.Fetcher.Init()
+			if c.Fetcher.ShouldRun() {
+
+				err := c.Fetcher.Perform()
+				if err != nil {
+					fmt.Println(err.Error())
+				}
 			}
-			time.Sleep(time.Second)
 		}
+
 	}()
 
+	//Run the sub process
 	c.Process()
 
+	close(watcher)
 	os.Exit(0)
 }
