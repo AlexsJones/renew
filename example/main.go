@@ -8,17 +8,6 @@ import (
 	"github.com/AlexsJones/renew/fetcher"
 )
 
-func programStateChange(s renew.StatusCode) {
-	switch s {
-	case renew.RUNNING:
-		fmt.Println("State has changed to running")
-	case renew.FETCHING:
-		fmt.Println("State has changed to fetched...")
-	case renew.UPDATEFETCHED:
-		fmt.Println("State has changed to update fetched")
-	}
-}
-
 func mainStarted() {
 	fmt.Println("Started renew")
 	time.Sleep(time.Second * 20)
@@ -26,9 +15,29 @@ func mainStarted() {
 }
 
 func main() {
+
+	stateChange := make(chan renew.StatusCode)
+
+	go func() {
+		for {
+			select {
+			case evt := <-stateChange:
+				switch evt {
+				case renew.RUNNING:
+					fmt.Println("State has changed to running")
+				case renew.FETCHING:
+					fmt.Println("State has changed to fetched...")
+				case renew.UPDATEFETCHED:
+					fmt.Println("State has changed to update fetched")
+				}
+			}
+
+			time.Sleep(time.Second)
+		}
+	}()
 	renew.Run(&renew.Configuration{
-		Process:      mainStarted,
-		StateMonitor: programStateChange,
+		Process:     mainStarted,
+		StateChange: stateChange,
 		Fetcher: &fetcher.GithubFetcher{
 			Interval:         time.Second * 5,
 			GithubRepository: "https://github.com/AlexsJones/renew.git",

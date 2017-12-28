@@ -15,7 +15,7 @@ import (
 
 func watch(c *Configuration) (chan struct{}, error) {
 
-	log.Printf("watching %q\n", c.ApplicationDirectory)
+	//log.Printf("watching %q\n", c.ApplicationDirectory)
 	w, err := fsnotify.NewWatcher()
 	if err != nil {
 		return nil, err
@@ -24,8 +24,8 @@ func watch(c *Configuration) (chan struct{}, error) {
 	go func() {
 		for {
 			select {
-			case e := <-w.Events:
-				log.Printf("watcher received: %+v", e)
+			case _ = <-w.Events:
+				//log.Printf("watcher received: %+v", e)
 				err = syscall.Exec(c.ApplicationBinaryPath, os.Args, os.Environ())
 				if err != nil {
 					log.Fatal(err)
@@ -33,7 +33,7 @@ func watch(c *Configuration) (chan struct{}, error) {
 			case err = <-w.Errors:
 				log.Printf("watcher error: %+v", err)
 			case <-done:
-				log.Print("watcher shutting down")
+
 				return
 			}
 		}
@@ -60,6 +60,10 @@ func Run(c *Configuration) {
 		fmt.Println("No fetch process configured")
 		os.Exit(1)
 	}
+	//If statechange is an open channel then defer the close to the program exit
+	if c.StateChange != nil {
+		defer close(c.StateChange)
+	}
 	_, filename, _, ok := runtime.Caller(0)
 	if ok {
 		p := path.Dir(filename)
@@ -82,14 +86,27 @@ func Run(c *Configuration) {
 
 	//Run the fetch cycle
 	go func() {
-
+		c.Fetcher.Init()
+		if c.StateChange != nil {
+			c.StateChange <- RUNNING
+		}
 		for {
-			c.Fetcher.Init()
+			c.StateChange <- RUNNING
 			if c.Fetcher.ShouldRun() {
-
+				//log.Println("Performing fetch")
+				if c.StateChange != nil {
+					c.StateChange <- FETCHING
+				}
+				//Perform the fetch
 				err := c.Fetcher.Perform()
 				if err != nil {
+					if c.StateChange != nil {
+						c.StateChange <- FAILURE
+					}
 					fmt.Println(err.Error())
+				}
+				if c.StateChange != nil {
+					c.StateChange <- UPDATEFETCHED
 				}
 			}
 		}
