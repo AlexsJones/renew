@@ -107,9 +107,10 @@ func Run(c *Configuration) {
 						c.StateChange <- FAILURE
 					}
 					fmt.Println(err.Error())
-				}
-				if c.StateChange != nil {
-					c.StateChange <- UPDATEFETCHED
+				} else {
+					if c.StateChange != nil {
+						c.StateChange <- UPDATEFETCHED
+					}
 				}
 
 			}
