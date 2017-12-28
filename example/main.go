@@ -8,12 +8,6 @@ import (
 	"github.com/AlexsJones/renew/fetcher"
 )
 
-func mainStarted() {
-	fmt.Println("Started renew")
-	time.Sleep(time.Second * 20)
-	fmt.Println("Ended renew")
-}
-
 func main() {
 
 	stateChange := make(chan renew.StatusCode)
@@ -38,7 +32,11 @@ func main() {
 		}
 	}()
 	renew.Run(&renew.Configuration{
-		Process:     mainStarted,
+		Process: func() {
+			fmt.Println("Started renew")
+			time.Sleep(time.Second * 20)
+			fmt.Println("Ended renew")
+		},
 		StateChange: stateChange,
 		Fetcher: &fetcher.GithubFetcher{
 			Interval:         time.Second * 5,
