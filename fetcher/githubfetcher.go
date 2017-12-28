@@ -1,11 +1,25 @@
 package fetcher
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
 	"time"
+
+	git "gopkg.in/src-d/go-git.v4"
 )
+
+func exists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return true, err
+}
 
 //GithubFetcher for retrieving and updating remote golang projects
 type GithubFetcher struct {
@@ -16,9 +30,32 @@ type GithubFetcher struct {
 }
 
 //Perform updte check
-func (g *GithubFetcher) Perform() error {
-	log.Println("Performing update with github fetcher")
+func (g *GithubFetcher) Perform(applicationBasePath string) error {
 
+	b, err := exists(applicationBasePath)
+	if err != nil {
+		return err
+	}
+	if !b {
+		return errors.New(".git not found in directory")
+	}
+	r, err := git.PlainOpen(applicationBasePath)
+	if err != nil {
+		return err
+	}
+
+	err = r.Pull(&git.PullOptions{RemoteName: "origin"})
+	if err != nil {
+		return err
+	}
+	// Print the latest commit that was just pulled
+	ref, err := r.Head()
+	if err != nil {
+		return err
+	}
+	commit, err := r.CommitObject(ref.Hash())
+
+	log.Printf("Updated to commit %s\n", commit)
 	return nil
 }
 
@@ -29,7 +66,7 @@ func (g *GithubFetcher) ShouldRun() bool {
 
 	if time.Now().After(nextRunTime) {
 		now := time.Now()
-		log.Printf("Running now and updating next run to %s\n", time.Now().Add(g.Interval).String())
+		//log.Printf("Running now and updating next run to %s\n", time.Now().Add(g.Interval).String())
 		g.LastRun = now
 		return true
 	}

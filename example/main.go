@@ -29,6 +29,8 @@ func main() {
 					fmt.Println("State has changed to fetched...")
 				case renew.UPDATEFETCHED:
 					fmt.Println("State has changed to update fetched")
+				case renew.RESTARTING:
+					fmt.Println("-----restarting-----")
 				}
 			}
 

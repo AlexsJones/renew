@@ -26,6 +26,9 @@ func watch(c *Configuration) (chan struct{}, error) {
 			select {
 			case _ = <-w.Events:
 				//log.Printf("watcher received: %+v", e)
+				if c.StateChange != nil {
+					c.StateChange <- RESTARTING
+				}
 				err = syscall.Exec(c.ApplicationBinaryPath, os.Args, os.Environ())
 				if err != nil {
 					log.Fatal(err)
@@ -98,7 +101,7 @@ func Run(c *Configuration) {
 					c.StateChange <- FETCHING
 				}
 				//Perform the fetch
-				err := c.Fetcher.Perform()
+				err := c.Fetcher.Perform(c.ApplicationDirectory)
 				if err != nil {
 					if c.StateChange != nil {
 						c.StateChange <- FAILURE
@@ -108,6 +111,7 @@ func Run(c *Configuration) {
 				if c.StateChange != nil {
 					c.StateChange <- UPDATEFETCHED
 				}
+
 			}
 		}
 
