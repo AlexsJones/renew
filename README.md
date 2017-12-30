@@ -5,7 +5,6 @@ Golang project self updater
 
 
 ```
-
 func main() {
 
 	stateChange := make(chan renew.StatusCode)
@@ -37,6 +36,9 @@ func main() {
 			time.Sleep(time.Second * 20)
 			fmt.Println("Ended renew")
 		},
+		ApplicationGoPath:    "github.com/AlexsJones/renew",
+		ApplicationArguments: []string{},
+
 		StateChange: stateChange,
 		Fetcher: &fetcher.GithubFetcher{
 			Interval:         time.Second * 5,
