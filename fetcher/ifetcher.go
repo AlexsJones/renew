@@ -2,13 +2,13 @@ package fetcher
 
 //IFetcher interface
 type IFetcher interface {
-	Perform(applicationBasePath string) error
+	Perform(applicationBasePath string) (bool, error)
 	ShouldRun() bool
 	Init()
 }
 
 //Perform update check
-func Perform(f IFetcher, applicationBasePath string) error {
+func Perform(f IFetcher, applicationBasePath string) (bool, error) {
 	return f.Perform(applicationBasePath)
 }
 

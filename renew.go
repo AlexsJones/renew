@@ -2,20 +2,21 @@ package renew
 
 import (
 	"fmt"
+	"go/build"
 	"log"
 	"os"
 	"path"
-	"runtime"
 	"syscall"
 	"time"
 
+	"github.com/AlexsJones/renew/plumbing"
 	"github.com/fsnotify/fsnotify"
 	"github.com/kardianos/osext"
 )
 
 func watch(c *Configuration) (chan struct{}, error) {
 
-	//log.Printf("watching %q\n", c.ApplicationDirectory)
+	log.Printf("watching %q\n", c.ApplicationGoPath)
 	w, err := fsnotify.NewWatcher()
 	if err != nil {
 		return nil, err
@@ -29,7 +30,7 @@ func watch(c *Configuration) (chan struct{}, error) {
 				if c.StateChange != nil {
 					c.StateChange <- RESTARTING
 				}
-				err = syscall.Exec(c.ApplicationBinaryPath, os.Args, os.Environ())
+				err = syscall.Exec(c.applicationBinaryPath, os.Args, os.Environ())
 				if err != nil {
 					log.Fatal(err)
 				}
@@ -41,7 +42,7 @@ func watch(c *Configuration) (chan struct{}, error) {
 			}
 		}
 	}()
-	err = w.Add(c.ApplicationDirectory)
+	err = w.Add(c.ApplicationGoPath)
 	if err != nil {
 		return nil, err
 	}
@@ -63,21 +64,24 @@ func Run(c *Configuration) {
 		fmt.Println("No fetch process configured")
 		os.Exit(1)
 	}
+	if c.ApplicationGoPath == "" {
+		fmt.Println("No ApplicationGoPath configured")
+		os.Exit(1)
+	}
+	//Modify path to absolute
+	c.ApplicationGoPath = path.Join(build.Default.GOPATH, "src", c.ApplicationGoPath)
+
 	//If statechange is an open channel then defer the close to the program exit
 	if c.StateChange != nil {
 		defer close(c.StateChange)
 	}
-	_, filename, _, ok := runtime.Caller(0)
-	if ok {
-		p := path.Dir(filename)
-		c.ApplicationDirectory = p
-	}
+	//This runs against the binary path, you'll need to `go build` your application
 	osex, err := osext.Executable()
 	if err != nil {
 		fmt.Println("An error occured with binary location search")
 		os.Exit(1)
 	}
-	c.ApplicationBinaryPath = osex
+	c.applicationBinaryPath = osex
 	c.ApplicationArguments = os.Args
 	c.StartTime = time.Now()
 
@@ -96,23 +100,27 @@ func Run(c *Configuration) {
 		for {
 			c.StateChange <- RUNNING
 			if c.Fetcher.ShouldRun() {
-				//log.Println("Performing fetch")
 				if c.StateChange != nil {
 					c.StateChange <- FETCHING
 				}
 				//Perform the fetch
-				err := c.Fetcher.Perform(c.ApplicationDirectory)
+				updated, err := c.Fetcher.Perform(c.ApplicationGoPath)
 				if err != nil {
 					if c.StateChange != nil {
 						c.StateChange <- FAILURE
 					}
 					fmt.Println(err.Error())
-				} else {
+				}
+				if updated {
 					if c.StateChange != nil {
 						c.StateChange <- UPDATEFETCHED
 					}
+					plumbing.RebuildAndInstall(c.ApplicationGoPath)
+				} else {
+					if c.StateChange != nil {
+						c.StateChange <- NOUPDATEFETCHED
+					}
 				}
-
 			}
 		}
 

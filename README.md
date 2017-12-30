@@ -3,7 +3,9 @@ Golang project self updater
 
 <img src="https://i.imgur.com/Ll0gTjt.png" width="100"/>
 
+
 ```
+
 func main() {
 
 	stateChange := make(chan renew.StatusCode)
@@ -17,6 +19,8 @@ func main() {
 					fmt.Println("State has changed to running")
 				case renew.FETCHING:
 					fmt.Println("State has changed to fetched...")
+				case renew.NOUPDATEFETCHED:
+					fmt.Println("No update to fetch")
 				case renew.UPDATEFETCHED:
 					fmt.Println("State has changed to update fetched")
 				case renew.RESTARTING:
@@ -40,4 +44,5 @@ func main() {
 		},
 	})
 }
+
 ```

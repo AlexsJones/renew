@@ -21,6 +21,8 @@ func main() {
 					fmt.Println("State has changed to running")
 				case renew.FETCHING:
 					fmt.Println("State has changed to fetched...")
+				case renew.NOUPDATEFETCHED:
+					fmt.Println("No update to fetch")
 				case renew.UPDATEFETCHED:
 					fmt.Println("State has changed to update fetched")
 				case renew.RESTARTING:
@@ -37,6 +39,9 @@ func main() {
 			time.Sleep(time.Second * 20)
 			fmt.Println("Ended renew")
 		},
+		ApplicationGoPath:    "github.com/AlexsJones/renew",
+		ApplicationArguments: []string{},
+
 		StateChange: stateChange,
 		Fetcher: &fetcher.GithubFetcher{
 			Interval:         time.Second * 5,

@@ -9,8 +9,8 @@ import (
 //Configuration ...
 type Configuration struct {
 	StartTime             time.Time
-	ApplicationDirectory  string
-	ApplicationBinaryPath string
+	ApplicationGoPath     string
+	applicationBinaryPath string
 	ApplicationArguments  []string
 	Process               func()
 	StateChange           chan StatusCode
