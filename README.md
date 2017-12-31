@@ -4,6 +4,13 @@ Golang project self updater
 <img src="https://i.imgur.com/Ll0gTjt.png" width="100"/>
 
 
+The purpose here is to let your applications auto update.
+I've built an interface for fetching from remotes; currently supporting github.
+
+
+Below the example shows how to modify your main to add the renew implementation.
+The `Process` field is a function pointer to your application code.
+
 ```
 func main() {
 
