@@ -68,6 +68,10 @@ func (g *GithubFetcher) Perform(applicationBasePath string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+	_, err = exec.Command("git", "reset", "--hard", "HEAD").Output()
+	if err != nil {
+		return false, err
+	}
 	_, err = exec.Command("git", "pull", g.DefaultOriginName, branch).Output()
 	if err != nil {
 		return false, err
