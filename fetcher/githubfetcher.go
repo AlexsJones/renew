@@ -2,7 +2,6 @@ package fetcher
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -69,11 +68,10 @@ func (g *GithubFetcher) Perform(applicationBasePath string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	out, err := exec.Command("git", "pull", "origin", branch).Output()
+	_, err = exec.Command("git", "pull", "origin", branch).Output()
 	if err != nil {
 		return false, err
 	}
-	log.Println(string(out))
 	updatedHash, err := fetchHash()
 	if err != nil {
 		return false, err
@@ -85,7 +83,6 @@ func (g *GithubFetcher) Perform(applicationBasePath string) (bool, error) {
 	if strings.Compare(initialhash, updatedHash) == 0 {
 		return false, nil
 	}
-	log.Printf("%s %s\n", initialhash, updatedHash)
 	return true, err
 }
 
