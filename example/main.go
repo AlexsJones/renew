@@ -44,8 +44,9 @@ func main() {
 
 		StateChange: stateChange,
 		Fetcher: &fetcher.GithubFetcher{
-			Interval:         time.Second * 5,
-			GithubRepository: "https://github.com/AlexsJones/renew.git",
+			Interval:          time.Second * 5,
+			DefaultOriginName: "origin",
+			GithubRepository:  "https://github.com/AlexsJones/renew.git",
 		},
 	})
 }

@@ -56,11 +56,11 @@ func (g *GithubFetcher) Perform(applicationBasePath string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	initialhash, err := fetchHash()
+	err = os.Chdir(applicationBasePath)
 	if err != nil {
 		return false, err
 	}
-	err = os.Chdir(applicationBasePath)
+	initialhash, err := fetchHash()
 	if err != nil {
 		return false, err
 	}
@@ -68,7 +68,7 @@ func (g *GithubFetcher) Perform(applicationBasePath string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	_, err = exec.Command("git", "pull", "origin", branch).Output()
+	_, err = exec.Command("git", "pull", g.DefaultOriginName, branch).Output()
 	if err != nil {
 		return false, err
 	}
