@@ -11,7 +11,7 @@ I've built an interface for fetching from remotes; currently supporting github.
 Below the example shows how to modify your main to add the renew implementation.
 The `Process` field is a function pointer to your application code.
 
-```
+```go
 func main() {
 
 	stateChange := make(chan renew.StatusCode)
