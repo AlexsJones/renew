@@ -53,7 +53,6 @@ func fetchBranch() (string, error) {
 
 //Perform updte check
 func (g *GithubFetcher) Perform(applicationBasePath string) (bool, error) {
-	log.Printf("Application base path: %s\n", applicationBasePath)
 	dir, err := os.Getwd()
 	if err != nil {
 		return false, err
@@ -70,7 +69,6 @@ func (g *GithubFetcher) Perform(applicationBasePath string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	//Horrible usage of command here due to gitv4 having ssh passthrough issues
 	out, err := exec.Command("git", "pull", "origin", branch).Output()
 	if err != nil {
 		return false, err
@@ -85,7 +83,6 @@ func (g *GithubFetcher) Perform(applicationBasePath string) (bool, error) {
 		return false, err
 	}
 	if strings.Compare(initialhash, updatedHash) == 0 {
-		log.Printf("%s %s\n", initialhash, updatedHash)
 		return false, nil
 	}
 	log.Printf("%s %s\n", initialhash, updatedHash)
@@ -99,7 +96,6 @@ func (g *GithubFetcher) ShouldRun() bool {
 
 	if time.Now().After(nextRunTime) {
 		now := time.Now()
-		log.Printf("Running now and updating next run to %s\n", time.Now().Add(g.Interval).String())
 		g.LastRun = now
 		return true
 	}
