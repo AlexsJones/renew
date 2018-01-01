@@ -16,7 +16,6 @@ import (
 
 func watch(c *Configuration) (chan struct{}, error) {
 
-	log.Printf("watching %q\n", c.ApplicationGoPath)
 	w, err := fsnotify.NewWatcher()
 	if err != nil {
 		return nil, err
