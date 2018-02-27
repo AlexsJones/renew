@@ -8,7 +8,7 @@ import (
 	"path"
 	"syscall"
 	"time"
-
+	"runtime"
 	"github.com/AlexsJones/renew/plumbing"
 	"github.com/fsnotify/fsnotify"
 	"github.com/kardianos/osext"
@@ -95,6 +95,11 @@ func Run(c *Configuration) {
 		c.Fetcher.Init()
 		if c.StateChange != nil {
 			c.StateChange <- RUNNING
+		}
+
+		if runtime.GOOS == "windows" {
+    	fmt.Println("Bypassing on windows")
+			return
 		}
 		for {
 			c.StateChange <- RUNNING
