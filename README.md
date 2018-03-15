@@ -1,4 +1,7 @@
 # renew
+
+[![Go Report Card](https://goreportcard.com/badge/github.com/AlexsJones/renew)](https://goreportcard.com/report/github.com/AlexsJones/renew)
+
 Golang project self updater
 
 <img src="https://i.imgur.com/Ll0gTjt.png" width="100"/>
